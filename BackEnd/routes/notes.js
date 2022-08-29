@@ -23,26 +23,25 @@ router.post('/addnote', fetchuser, [
     body('description', 'Enter a valid description').isLength({ min: 7 }),
 
 ], async (req, res) => {
-
+    let success = false;
     try {
         const { title, description, tag } = req.body;
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(400).json({ success, errors: errors.array() });
         }
 
         const note = new Note({
             title, description, tag, user: req.user.id
         })
         const saveNote = await note.save()
-
-        res.json(saveNote)
+        success = true;
+        res.json({ success, saveNote })
     } catch (error) {
         console.log(error)
         res.status(500).send('Internal Error Occured');
     }
-
 })
 
 //ROUTE 3 : Update a existing note using POST : "/api/notes/updatenote/:id" . login required

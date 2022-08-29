@@ -13,17 +13,17 @@ const jwt_secret_string = 'this string is secret';
 router.post('/createuser', [
     body('name', 'Enter the valid name').isLength({ min: 3 }),
     body('email', 'Enter the valid email').isEmail(),
-    body('password', 'Password should be atleast 5 characters').isLength({ min: 7 }),
+    body('password', 'Password should be atleast 7 characters').isLength({ min: 7 }),
 ], async (req, res) => {
-
+    let success = false;
     //Error validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({ success, errors: errors.array() });
     }
     try {
         //find a unique email
-        let user = await User.findOne({ email: req.body.email })
+        let user = await User.findOne({ success, email: req.body.email })
         if (user) {
             return res.status(400).json({ error: 'please enter a unique value for email' })
         }
@@ -44,8 +44,9 @@ router.post('/createuser', [
         }
         var token = jwt.sign(data, jwt_secret_string);
 
+        success = true;
         //send response as json
-        res.json({ token })
+        res.json({ success, token })
 
     } catch (error) {
         console.log(error)
@@ -59,24 +60,24 @@ router.post('/login', [
     body('email', 'Enter the valid email').isEmail(),
     body('password', "password can't be blank").exists(),
 ], async (req, res) => {
-
+    let success = false;
+    let emailSuccess = false;
     //Error validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({ emailSuccess, success, errors: errors.array() });
     }
-
-
+    emailSuccess = true;
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ error: "pls login with correct email Credential" });
+            return res.status(400).json({ emailSuccess, success, error: "pls login with correct email Credential" });
         }
 
         const passwordCompare = await bcrypt.compare(password, user.password)
         if (!passwordCompare)
-            return res.status(400).json({ error: "pls login with correct password Credential" });
+            return res.status(400).json({ emailSuccess, success, error: "pls login with correct password Credential" });
 
         const data = {
             user: {
@@ -85,7 +86,8 @@ router.post('/login', [
         }
 
         var token = jwt.sign(data, jwt_secret_string);
-        res.json({ token })
+        success = true;
+        res.json({ emailSuccess, success, token })
 
     } catch (error) {
         console.log(error)
